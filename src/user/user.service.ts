@@ -7,22 +7,24 @@ import { Repository } from 'typeorm';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectRepository(User) private userRepo: Repository<User>) { }
+  constructor(@InjectRepository(User) private userRepo: Repository<User>) {}
   async create(createUserDto: CreateUserDto) {
-    const user=this.userRepo.create(createUserDto)
-    return await this.userRepo.save(user)
+    const user = this.userRepo.create(createUserDto);
+    return await this.userRepo.save(user);
   }
-
+  async updateHashedRefreshToken(id: number, hashedRefreshToken: string) {
+    return await this.userRepo.update({ id }, { hashedRefreshToken });
+  }
   findAll() {
     return `This action returns all user`;
   }
   async findByEmail(email: string) {
-    const foundEmail=await this.userRepo.findOne({
+    const foundEmail = await this.userRepo.findOne({
       where: {
-        email
-      }
-    })
-    return foundEmail
+        email,
+      },
+    });
+    return foundEmail;
   }
 
   findOne(id: number) {
@@ -30,8 +32,8 @@ export class UserService {
       where: {
         id,
       },
-      select:["firstName","lastName","avatarUrl"]
-    })
+      select: ['firstName', 'lastName', 'avatarUrl',"hashedRefreshToken"],
+    });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

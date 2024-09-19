@@ -1,6 +1,7 @@
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryGeneratedColumn, ManyToMany, JoinTable, BeforeInsert } from "typeorm";
 import { Property } from "./property.entity";
 import * as bcrypt from 'bcrypt';
+import { Role } from "src/auth/enum/role";
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -19,11 +20,21 @@ export class User {
   avatarUrl: string
 
   @CreateDateColumn()
-  createdAt: Date;
+  createdAt: Date
+
+  @Column({ nullable: true })
+  hashedRefreshToken: string;
 
   @OneToMany(() => Property, (property) => property.user)
   properties: Property[]
-
+  @Column({
+    type: "enum",
+    enum: Role,
+    default: Role.USER,
+    comment: "The user's role in the application" 
+  })
+    
+  role:Role
   @Column()
   password: string;
 
