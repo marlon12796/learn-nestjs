@@ -4,7 +4,6 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
 import { UserService } from 'src/user/user.service';
 import { compare } from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -29,30 +28,33 @@ export class AuthService {
 
     return { id: user.id, email: user.email };
   }
- 
 
   async generateAndStoreTokens(user: User) {
-    console.log(user)
+    console.log(user);
     const payload: AuthJwtPayload = { sub: user.id, email: user.email };
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),
       this.jwtService.signAsync(payload, this.refreshTokenConfig),
     ]);
     const hashedRefreshToken = await argon2.hash(refreshToken);
-    await this.userService.updateHashedRefreshToken(user.id, hashedRefreshToken);
-    
+    await this.userService.updateHashedRefreshToken(
+      user.id,
+      hashedRefreshToken,
+    );
+
     return { accessToken, refreshToken };
   }
-   async login(user: User) {
-   const { accessToken, refreshToken } = await this.generateAndStoreTokens(user);
+  async login(user: User) {
+    const { accessToken, refreshToken } =
+      await this.generateAndStoreTokens(user);
     return { accessToken, refreshToken, id: user.id };
   }
   async refresh(user: User) {
-     const { accessToken, refreshToken } = await this.generateAndStoreTokens(user);
+    const { accessToken, refreshToken } =
+      await this.generateAndStoreTokens(user);
     return { accessToken, refreshToken };
   }
   async validateRefreshToken(userId: number, refreshToken: string) {
-    console.log(userId)
     const user = await this.userService.findOne(userId);
     if (!user || !user.hashedRefreshToken)
       throw new NotFoundException('Refresh Token not found!');
@@ -64,8 +66,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid Refresh Token!');
     return { id: userId };
   }
-  async logout(userId:number) {
-    // Implement logout logic here
-   return this.userService.updateHashedRefreshToken(userId,null)
- }
+  async logout(userId: number) {
+    return this.userService.updateHashedRefreshToken(userId, null);
+  }
+  async validateJwtUser(userId: number) {
+    const user = await this.userService.findOne(userId);
+    if (!user) throw new UnauthorizedException('User not Found!');
+    const currentUser: Pick<User, 'id' | 'role'> = {
+      id: user.id,
+      role: user.role,
+    };
+    return currentUser;
+  }
 }
